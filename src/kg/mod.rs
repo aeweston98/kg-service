@@ -1,21 +1,22 @@
 use std::vec::Vec;
 
-pub struct Graph {
-	pub description: String,
-	pub node_vector: Vec<node>,
-	pub seed_node: node
+pub mod client;
+
+//changing the structure since each individual query will
+//return a list of results, but they are only connected to
+//the query node, not connected together therefore 
+//introducing a graph structure in my own code
+//would just be extra complexity with no benefit
+
+pub struct Query {
+	pub query: String,
+	pub response_vector: Vec<client::Response>,
+
+	graph_client: client::GoogleGraphClient
 }
 
-pub struct Node {
-	pub name: String,
-	pub type: String,
-	pub node_id: u64,
-	pub edges: Vec<edge>
+impl Query{
+	query_graph() {
+
+	}
 }
-
-pub struct Edge {
-	pub relationship: String,
-	pub pair_node_id: u64
-}
-
-

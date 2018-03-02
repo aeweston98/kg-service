@@ -9,7 +9,7 @@ use futures::{Future, Stream};
 use hyper::Client;
 use tokio_core::reactor::Core;
 
-struct GoogleGraphClient {
+pub struct GoogleGraphClient {
 	core: Core,
 	client: Client,
 	target_url: String
