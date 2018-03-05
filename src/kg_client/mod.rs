@@ -1,11 +1,15 @@
 extern crate hyper;
 extern crate hyper_native_tls;
+extern crate serde_json;
 
 use std::io::{self, Write, Read};
 use std::fs::File;
+
 use self::hyper::Client;
 use self::hyper::net::HttpsConnector;
 use self::hyper_native_tls::NativeTlsClient;
+use self::serde_json::{Value, Error};
+
 
 pub struct GoogleGraphClient {
 	client: Client,
@@ -28,7 +32,7 @@ impl GoogleGraphClient {
 		return GoogleGraphClient{client: client, base_url: String::from("https://kgsearch.googleapis.com/v1/entities:search?"), api_key: api_key};
 	}
 
-	pub fn make_request(&self, request: &Request) {
+	pub fn make_request(&self, request: &Request) -> Response {
 		let mut target_uri = self.base_url.clone();
 		self.construct_url(request, &mut target_uri);
 
@@ -36,6 +40,12 @@ impl GoogleGraphClient {
 	    let mut res = self.client.get(&target_uri).send().unwrap().read_to_string(&mut s).unwrap();
 		
     	println!("Result: {}", s);
+
+    	let json_response: Value = serde_json::from_str(&s).unwrap();
+    	
+    	//println!("id: {}", id);
+    	let response = self.parse_response(&json_response, 0);
+    	return response;
 	}
 	
 	fn construct_url(&self, request: &Request, s: &mut String){
@@ -52,6 +62,11 @@ impl GoogleGraphClient {
 
 		s.push_str("&limit=");
 		s.push_str(&request.limit.to_string());
+	}
+
+	fn parse_response(&self, json_response: &Value, i: usize) -> Response {
+		let response = Response::new(&json_response, i);
+		return response;
 	}
 
 }
@@ -83,5 +98,14 @@ pub struct Response {
 }
 
 impl Response {
+	pub fn new(json_response: &Value, i: usize) -> Response {
+		let id = json_response["itemListElement"][i]["result"]["@id"].to_string();
+		let name = json_response["itemListElement"][i]["result"]["name"].to_string();
+		let description = json_response["itemListElement"][i]["result"]["@id"].to_string();
+		let result_score = json_response["itemListElement"][i]["resultScore"].as_f64().unwrap();
+		
+		let temp = json_response["itemListElement"][i]["result"]["@type"].as_array().unwrap();
 
+		Response {id: id, name: name, types: types, description: description, result_score: result_score }
+	}
 }
