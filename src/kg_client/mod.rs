@@ -65,6 +65,8 @@ impl GoogleGraphClient {
 		s.push_str("&key=");
 		s.push_str(&self.api_key);
 
+		s.push_str("&types=MusicRecording");
+
 		s.push_str("&languages=");
 		s.push_str(&request.languages);
 
