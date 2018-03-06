@@ -32,20 +32,28 @@ impl GoogleGraphClient {
 		return GoogleGraphClient{client: client, base_url: String::from("https://kgsearch.googleapis.com/v1/entities:search?"), api_key: api_key};
 	}
 
-	pub fn make_request(&self, request: &Request) -> Response {
+	pub fn make_request(&self, request: &Request) -> Vec<Response> {
+		let n: i32 = request.get_limit();
+
 		let mut target_uri = self.base_url.clone();
 		self.construct_url(request, &mut target_uri);
 
 		let mut s = String::new();
 	    let mut res = self.client.get(&target_uri).send().unwrap().read_to_string(&mut s).unwrap();
-		
-    	println!("Result: {}", s);
 
+    	println!("Result: {}", s);
     	let json_response: Value = serde_json::from_str(&s).unwrap();
     	
+    	let mut response_vec: Vec<Response> = Vec::new();
+
+    	for i in 0..n {
+	    	let temp_response = self.parse_response(&json_response, i as usize);
+	    	response_vec.push(temp_response);
+	    }
+
     	//println!("id: {}", id);
-    	let response = self.parse_response(&json_response, 0);
-    	return response;
+    	
+    	return response_vec;
 	}
 	
 	fn construct_url(&self, request: &Request, s: &mut String){
@@ -86,13 +94,17 @@ impl Request{
 		let query = copy_query.clone();
 		Request {query: query, ids: None, languages: String::from("en"), types: None, indent: false, prefix: false, limit: limit}
 	}
+
+	pub fn get_limit(&self) -> i32{
+		return self.limit;
+	}
 }
 
 
 pub struct Response {
 	id: String,
 	name: String,
-	types: Vec<String>,
+	types: Vec<Value>,
 	description: String,
 	result_score: f64
 }
@@ -106,6 +118,6 @@ impl Response {
 		
 		let temp = json_response["itemListElement"][i]["result"]["@type"].as_array().unwrap();
 
-		Response {id: id, name: name, types: types, description: description, result_score: result_score }
+		Response {id: id, name: name, types: temp.to_vec(), description: description, result_score: result_score }
 	}
 }
