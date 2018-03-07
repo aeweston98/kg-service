@@ -1,5 +1,7 @@
 extern crate serde_json;
+extern crate chrono;
 
+use self::chrono::prelude::*;
 use self::serde_json::{Value, Error};
 
 trait PlaylistMaker {
@@ -12,8 +14,11 @@ trait PlaylistMaker {
 }
 
 struct Song{
-	title: String,
-	artist: String
+	Name: String,
+	artist: Vec<String>,
+	duration: f64,
+	id: String,
+	played_at: DateTime<Utc> 
 }
 
 impl Song{
@@ -23,9 +28,7 @@ impl Song{
 
 	pub fn to_json(&self) -> String {
 		
-		let json_value: Value = null;
-		json_value["title"] = serde_json::from_str(&self.title).unwrap();
-		json_value["artist"] = serde_json::from_str(&self.artist).unwrap();
+		let json_value: Value;
 
 		return json_value.to_string();
 	}
@@ -45,16 +48,7 @@ impl PlaylistMaker for SimplePM {
 	}
 
 	fn create_playlist(&self, songs: &Vec<Song>, client: kg_client::GoogleKnowledgeGraphClient){
-		let n = songs.len();
-		let q: i32 = self.playlist_size / (n as i32);
 
-		for i in 0..n {
-			//make some actual query
-			let mut s = String::from("songs similar to");
-			s.push_str(&songs[i].get_title());
-
-			let request = kg_client::Request::new(s, q);
-			client.make_request(request);
 		}
 	}
 
