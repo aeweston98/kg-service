@@ -3,6 +3,7 @@
 mod server;
 mod playlist;
 mod kg_client;
+mod graph;
 
 fn main() {
 
