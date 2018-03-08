@@ -23,7 +23,10 @@ impl UserDataGraph{
 		let i_2: Option<&i32> = self.id_lookup.get(&node_2_id);
 
 		if i_1 != None && i_2 != None {	//both of the nodes exist
-			let key: String = self.edge_table_hash(node_1_id, node_2_id);
+			let i1 = *(i_1.unwrap());
+			let i2 = *(i_2.unwrap());
+
+			let key: String = self.edge_table_hash(node_1_id.clone(), node_2_id.clone());
 
 			//scope the test to check if the edge already exists since it uses a borrow and insert needs a mutable reference
 			{ 
@@ -36,12 +39,29 @@ impl UserDataGraph{
 			}
 			
 			self.edge_table.insert(key, start_weight);
-			return true;
+
+			//once we know we are inserting a new edge, we can add it to each Node in the vec
+			if let Some(node1) = self.graph_vec.get_mut(i1 as usize){
+				node1.add_edge(i2, node_2_id);
+			}
+			else{
+				println!("Attempted to make an edge with a non-existant node");
+				return false;
+			}
+
+			if let Some(node2) = self.graph_vec.get_mut(i2 as usize){
+				node2.add_edge(i1, node_1_id);
+			}
+			else{
+				println!("Attempted to make an edge with a non-existant node");
+				return false;
+			}
 		}
 		else{
 			println!("Attempted to make an edge with a non-existant node");
 			return false;
 		}
+		return true;
 	}
 
 	pub fn add_weight(&mut self, node_1_id: String, node_2_id: String, inc: i32) -> bool{
@@ -68,30 +88,54 @@ impl UserDataGraph{
 	}
 
 	//need to have some function to implement < operator on string type
-	fn str_cmp(&self, str1: String, str2: String){
+	//it doesn't actually matter what algorithm is used here as long as it is
+	//consistent for an input and its reverse 
+	//ie. str_cmp("a", "b") = true and str_cmp("b","a") = false
 
+	fn str_cmp(&self, str1: String, str2: String) -> bool {
+		//if str1 < str2 return true
+		//else return false
+
+		let l1 = str1.len();
+		let l2 = str2.len();
+		
+		if(l1 < l2){
+			return true;
+		}
+		if(l1 > l2){
+			return false;
+		}
+
+		//they are the same length
+		//iterate over the string and return upon first decision
+
+
+		return true;
 	}
-}
-
-struct Edge{
-	relationship_weight: i32,
-	destination_node: i32
 }
 
 struct Node{
 	cluster_label: Option<i32>,
 	id: String,
-	edges: Vec<Edge>
+	edges: Vec<(i32, String)>
 }
 
 impl Node{
 	pub fn new(id: String) -> Node {
-		let edges: Vec<Edge> = Vec::new();
+		let edges: Vec<(i32, String)> = Vec::new();
 		Node{cluster_label: None, id: id, edges: edges}
 	}
 
 	pub fn get_id(&self) -> String {
 		return self.id.clone();
+	}
+
+	//this function assumes that the given edge does not already exist
+	//this relies on some checks done in graph::add_edge on the edge hashmap since
+	//it is much more efficient to check if an edge is an entry in the hash map
+	//then to search the vector for it
+	pub fn add_edge(&mut self, new_index: i32, new_id: String){
+		self.edges.push((new_index, new_id));
 	}
 }
 
