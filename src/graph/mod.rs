@@ -1,6 +1,7 @@
 
 
 use std::collections::HashMap;
+use std::thread;
 
 struct UserDataGraph{
 	graph_vec: Vec<Node>,
@@ -159,18 +160,41 @@ impl UserDataGraph{
 		let result = self.edge_table.contains_key(&key);
 		return result;
 	}
+
+	pub fn generate_cluster(&self) -> Vec<String> {
+		//generate 4 threads and call attempt_cluster on each
+
+
+		//join the 4 threads
+
+
+		//pick the resulting cluster with the highest score and return it
+	}
+
+	fn attempt_cluster(&self, start_node: &Node, thread_num: usize) -> Vec<String>{
+		//initialize the cluster score and set for cluster nodes
+		let cluster_score: i32 = 0;
+		let cluster_nodes: Vec<String> = Vec::new();
+
+		//add the start node to the node set and mark it as visited
+		cluster_nodes.push((*start_node).get_id());
+		(*start_node).set_visited(thread_num);
+
+
+	}
 }
 
 struct Node{
-	cluster_label: Option<i32>,
 	id: String,
-	edges: Vec<(i32, String)>
+	edges: Vec<(i32, String)>,
+	visited: [bool; 4]
 }
 
 impl Node{
 	pub fn new(id: String) -> Node {
 		let edges: Vec<(i32, String)> = Vec::new();
-		Node{cluster_label: None, id: id, edges: edges}
+		let visited = [false, false, false, false];
+		Node{cluster_label: None, id: id, edges: edges, visited: visited}
 	}
 
 	pub fn get_id(&self) -> String {
@@ -183,6 +207,14 @@ impl Node{
 	//then to search the vector for it
 	pub fn add_edge(&mut self, new_index: i32, new_id: String){
 		self.edges.push((new_index, new_id));
+	}
+
+	pub fn clear_visited(&mut self) {
+		self.visited = [false, false, false, false];
+	}
+
+	pub fn set_visited(&mut self, i: usize) {
+		self.visited[i] = true;
 	}
 }
 
