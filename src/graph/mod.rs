@@ -9,24 +9,30 @@ struct UserDataGraph{
 }
 
 impl UserDataGraph{
-	pub fn create_node(&mut self, new_node_id: String){
-		let new_node = Node::new(new_node_id);
+	pub fn create_node(&mut self, new_node_id: &String) -> bool {
+		if self.id_lookup.contains_key(new_node_id) {
+			return false;
+		}
+		else{
+			let new_node = Node::new(new_node_id.clone());
 
-		let new_node_index = self.id_lookup.len() as i32;
+			let new_node_index = self.id_lookup.len() as i32;
 
-		self.id_lookup.insert(new_node.get_id(), new_node_index);
-		self.graph_vec.push(new_node);
+			self.id_lookup.insert(new_node.get_id(), new_node_index);
+			self.graph_vec.push(new_node);
+			return true;
+		}
 	}
 
-	pub fn create_edge(&mut self,  node_1_id: String, node_2_id: String, start_weight: i32) -> bool {
-		let i_1: Option<&i32> = self.id_lookup.get(&node_1_id);
-		let i_2: Option<&i32> = self.id_lookup.get(&node_2_id);
+	pub fn create_edge(&mut self,  node_1_id: &String, node_2_id: &String, start_weight: i32) -> bool {
+		let i_1: Option<&i32> = self.id_lookup.get(node_1_id);
+		let i_2: Option<&i32> = self.id_lookup.get(node_2_id);
 
 		if i_1 != None && i_2 != None {	//both of the nodes exist
 			let i1 = *(i_1.unwrap());
 			let i2 = *(i_2.unwrap());
 
-			let key: String = self.edge_table_hash(node_1_id.clone(), node_2_id.clone());
+			let key: String = self.edge_table_hash(node_1_id, node_2_id);
 
 			//scope the test to check if the edge already exists since it uses a borrow and insert needs a mutable reference
 			{ 
@@ -42,7 +48,7 @@ impl UserDataGraph{
 
 			//once we know we are inserting a new edge, we can add it to each Node in the vec
 			if let Some(node1) = self.graph_vec.get_mut(i1 as usize){
-				node1.add_edge(i2, node_2_id);
+				node1.add_edge(i2, node_2_id.clone());
 			}
 			else{
 				println!("Attempted to make an edge with a non-existant node");
@@ -50,7 +56,7 @@ impl UserDataGraph{
 			}
 
 			if let Some(node2) = self.graph_vec.get_mut(i2 as usize){
-				node2.add_edge(i1, node_1_id);
+				node2.add_edge(i1, node_1_id.clone());
 			}
 			else{
 				println!("Attempted to make an edge with a non-existant node");
@@ -64,7 +70,7 @@ impl UserDataGraph{
 		return true;
 	}
 
-	pub fn add_weight(&mut self, node_1_id: String, node_2_id: String, inc: i32) -> bool{
+	pub fn add_weight(&mut self, node_1_id: &String, node_2_id: &String, inc: i32) -> bool{
 		let key: String = self.edge_table_hash(node_1_id, node_2_id);
 
 		if let Some(weight) = self.edge_table.get_mut(&key) {
@@ -80,9 +86,21 @@ impl UserDataGraph{
 	//later I think I will want to update all the hashing from extremely long string id's
 	//to some smarter hash function which returns i32's to hash on
 	//this is a performance/space concern, not necessary right away
-	fn edge_table_hash(&self, node_1_id: String, node_2_id: String) -> String {
-		let mut result: String = node_1_id.clone();
-		result.push_str(&node_2_id);
+	fn edge_table_hash(&self, node_1_id: &String, node_2_id: &String) -> String {
+		let mut order = false;
+		{
+			order = self.str_cmp(node_1_id, node_2_id);
+		}
+
+		let mut result = String::new();
+		if order {
+			result = node_1_id.clone();
+			result.push_str(node_2_id);
+		}
+		else{
+			result = node_2_id.clone();
+			result.push_str(node_1_id);
+		}
 
 		return result;
 	}
@@ -92,12 +110,12 @@ impl UserDataGraph{
 	//consistent for an input and its reverse 
 	//ie. str_cmp("a", "b") = true and str_cmp("b","a") = false
 
-	fn str_cmp(&self, str1: String, str2: String) -> bool {
+	fn str_cmp(&self, str1: &String, str2: &String) -> bool {
 		//if str1 < str2 return true
 		//else return false
 
-		let l1 = str1.len();
-		let l2 = str2.len();
+		let l1 = (*str1).len();
+		let l2 = (*str2).len();
 		
 		if(l1 < l2){
 			return true;
@@ -106,11 +124,40 @@ impl UserDataGraph{
 			return false;
 		}
 
+		let mut c1 = (*str1).chars().next().unwrap();
+		let mut c2 = (*str2).chars().next().unwrap();
+		let mut i1 = c1 as u8;
+		let mut i2 = c2 as u8;
 		//they are the same length
 		//iterate over the string and return upon first decision
-
+		for i in 1..l1 {
+			if(i1 < i2){
+				return true;
+			}
+			if(i1 > i2){
+				return false;
+			}
+			if(i == l1-1){
+				break;
+			}
+			c1 = (*str1).chars().next().unwrap();
+			c2 = (*str2).chars().next().unwrap();
+			let mut i1 = c1 as u8;
+			let mut i2 = c2 as u8;
+		}
 
 		return true;
+	}
+
+	pub fn node_exists(&self, node_id: &String) -> bool {
+		let result = self.id_lookup.contains_key(node_id);
+		return result;
+	}
+
+	pub fn edge_exists(&self, node_1_id: &String, node_2_id: &String) -> bool {
+		let key = self.edge_table_hash(node_1_id, node_2_id);
+		let result = self.edge_table.contains_key(&key);
+		return result;
 	}
 }
 
