@@ -1,9 +1,15 @@
 
+use rand::{Rng, thread_rng};
+
 use std::collections::HashMap;
 use std::thread;
 
-use spotify;
+//use spotify;
 
+fn get_rn_in_range(range: usize) -> usize {
+	let mut rng = thread_rng();
+	rng.gen_range(0, range as i32) as usize
+}
 
 pub struct UserDataGraph{
 	graph_vec: Vec<Node>,
@@ -50,7 +56,7 @@ impl UserDataGraph{
 				let weight = self.edge_table.get(&key);
 
 				if weight != None{
-	    			println!("Attempted to create an edge that already exists");
+	    			println!("Attempted to create an edge that already exists: {} -> {}", node_1_id, node_2_id);
 					return false;
 				}
 			}
@@ -86,11 +92,11 @@ impl UserDataGraph{
 
 		if let Some(weight) = self.edge_table.get_mut(&key) {
     		*weight += inc;
-    		return true;
+    		true
 		}
 		else{
 			println!("Attempted to add weight to non-existant edge");
-			return false;
+			false
 		}
 	}
 
@@ -106,10 +112,12 @@ impl UserDataGraph{
 		let mut result = String::new();
 		if order {
 			result = node_1_id.clone();
+			result.push_str("-");
 			result.push_str(node_2_id);
 		}
 		else{
 			result = node_2_id.clone();
+			result.push_str("-");
 			result.push_str(node_1_id);
 		}
 
@@ -185,22 +193,29 @@ impl UserDataGraph{
 	}
 */
 
-	fn attempt_cluster(&self, start_node: &Node, thread_num: usize, num_nodes: i32) -> (i32, Vec<String>) {
+
+
+	fn attempt_cluster(&self, start_node: &mut Node, thread_num: usize, num_nodes: i32) -> (i32, Vec<String>) {
 		//initialize the cluster score and set for cluster nodes
-		let cluster_score: i32 = 0;
-		let cluster_nodes: Vec<String> = Vec::new();
-		let num_visited: i32 = 0;
+		let mut cluster_score: i32 = 0;
+		let mut cluster_nodes: Vec<String> = Vec::new();
+		let mut num_visited: i32 = 0;
 
 		//add the start node to the node set and mark it as visited
-		cluster_nodes.push((*start_node).get_id());
-		(*start_node).set_visited(thread_num);
-		let next_node: Node = graph_vec[*start_node.get_max_edge()];
+		cluster_nodes.push(start_node.get_id());
+		let mut cur_node: &Node = start_node;
+		let mut next_node: &Node = &self.graph_vec[get_rn_in_range(cur_node.edges.len())];
 
 		while num_visited < num_nodes {
-			if next_node.visited[thread_num] {
-				//pick another edge at random
-			}
 
+			cluster_nodes.push(next_node.get_id());
+			
+			let id: String = self.edge_table_hash(&cur_node.get_id(), &next_node.get_id());
+			cluster_score += self.edge_table.get(&id).unwrap();
+			
+			cur_node = next_node;
+			next_node = &self.graph_vec[get_rn_in_range(cur_node.edges.len())];
+			num_visited += 1;
 		}
 
 		(cluster_score, cluster_nodes)
@@ -209,25 +224,17 @@ impl UserDataGraph{
 
 struct Node{
 	id: String,
-	edges: Vec<(i32, String)>,
-	visited: [bool; 4],
-	max_edge: i32
+	edges: Vec<(i32, String)>
 }
 
 impl Node{
 	pub fn new(id: String) -> Node {
 		let edges: Vec<(i32, String)> = Vec::new();
-		let visited = [false, false, false, false];
-		let max_edge = -1;
-		Node{id: id, edges: edges, visited: visited, max_edge: max_edge}
+		Node{id: id, edges: edges}
 	}
 
 	pub fn get_id(&self) -> String {
 		return self.id.clone();
-	}
-
-	pub fn get_max_edge(&self) -> i32 {
-		return self.max_edge;
 	}
 
 	//this function assumes that the given edge does not already exist
@@ -236,14 +243,6 @@ impl Node{
 	//then to search the vector for it
 	pub fn add_edge(&mut self, new_index: i32, new_id: String){
 		self.edges.push((new_index, new_id));
-	}
-
-	pub fn clear_visited(&mut self) {
-		self.visited = [false, false, false, false];
-	}
-
-	pub fn set_visited(&mut self, i: usize) {
-		self.visited[i] = true;
 	}
 }
 
