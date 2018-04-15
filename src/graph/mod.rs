@@ -1,15 +1,25 @@
 
-
 use std::collections::HashMap;
 use std::thread;
 
-struct UserDataGraph{
+use spotify;
+
+
+pub struct UserDataGraph{
 	graph_vec: Vec<Node>,
 	id_lookup: HashMap<String, i32>,
 	edge_table: HashMap<String, i32>
 }
 
 impl UserDataGraph{
+
+	pub fn new() -> UserDataGraph{
+		let graph_vec = Vec::new();
+		let id_lookup = HashMap::new();
+		let edge_table = HashMap::new();
+		UserDataGraph{graph_vec: graph_vec, id_lookup: id_lookup, edge_table: edge_table}
+	}
+
 	pub fn create_node(&mut self, new_node_id: &String) -> bool {
 		if self.id_lookup.contains_key(new_node_id) {
 			return false;
@@ -118,10 +128,10 @@ impl UserDataGraph{
 		let l1 = (*str1).len();
 		let l2 = (*str2).len();
 		
-		if(l1 < l2){
+		if l1 < l2 {
 			return true;
 		}
-		if(l1 > l2){
+		if l1 > l2 {
 			return false;
 		}
 
@@ -132,13 +142,13 @@ impl UserDataGraph{
 		//they are the same length
 		//iterate over the string and return upon first decision
 		for i in 1..l1 {
-			if(i1 < i2){
+			if i1 < i2 {
 				return true;
 			}
-			if(i1 > i2){
+			if i1 > i2 {
 				return false;
 			}
-			if(i == l1-1){
+			if i == l1-1 {
 				break;
 			}
 			c1 = (*str1).chars().next().unwrap();
@@ -160,45 +170,64 @@ impl UserDataGraph{
 		let result = self.edge_table.contains_key(&key);
 		return result;
 	}
-
-	pub fn generate_cluster(&self) -> Vec<String> {
+/*
+	pub fn generate_cluster(&self, num_nodes: i32) -> Vec<String> {
 		//generate 4 threads and call attempt_cluster on each
-
+		let t1 = thread::spawn(move || { 
+		});
 
 		//join the 4 threads
 
 
 		//pick the resulting cluster with the highest score and return it
-	}
 
-	fn attempt_cluster(&self, start_node: &Node, thread_num: usize) -> Vec<String>{
+
+	}
+*/
+
+	fn attempt_cluster(&self, start_node: &Node, thread_num: usize, num_nodes: i32) -> (i32, Vec<String>) {
 		//initialize the cluster score and set for cluster nodes
 		let cluster_score: i32 = 0;
 		let cluster_nodes: Vec<String> = Vec::new();
+		let num_visited: i32 = 0;
 
 		//add the start node to the node set and mark it as visited
 		cluster_nodes.push((*start_node).get_id());
 		(*start_node).set_visited(thread_num);
+		let next_node: Node = graph_vec[*start_node.get_max_edge()];
 
+		while num_visited < num_nodes {
+			if next_node.visited[thread_num] {
+				//pick another edge at random
+			}
 
+		}
+
+		(cluster_score, cluster_nodes)
 	}
 }
 
 struct Node{
 	id: String,
 	edges: Vec<(i32, String)>,
-	visited: [bool; 4]
+	visited: [bool; 4],
+	max_edge: i32
 }
 
 impl Node{
 	pub fn new(id: String) -> Node {
 		let edges: Vec<(i32, String)> = Vec::new();
 		let visited = [false, false, false, false];
-		Node{cluster_label: None, id: id, edges: edges, visited: visited}
+		let max_edge = -1;
+		Node{id: id, edges: edges, visited: visited, max_edge: max_edge}
 	}
 
 	pub fn get_id(&self) -> String {
 		return self.id.clone();
+	}
+
+	pub fn get_max_edge(&self) -> i32 {
+		return self.max_edge;
 	}
 
 	//this function assumes that the given edge does not already exist

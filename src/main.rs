@@ -1,16 +1,11 @@
 
-
-mod server;
-mod playlist;
-mod kg_client;
 mod graph;
+mod spotify;
+mod data_handler;
+mod playlist_gen;
+
+use graph::UserDataGraph;
 
 fn main() {
-
-	let query = String::from("Purple Haze");
-	let request = kg_client::Request::new(query, 5);
-	let ggc = kg_client::GoogleGraphClient::new();
-
-	let response: Vec<kg_client::Response> = ggc.make_request(&request);
-
+	let udg: UserDataGraph = UserDataGraph::new();
 }
