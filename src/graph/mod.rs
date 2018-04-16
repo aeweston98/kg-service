@@ -13,7 +13,7 @@ fn get_rn_in_range(range: usize) -> usize {
 
 pub struct UserDataGraph{
 	graph_vec: Vec<Node>,
-	id_lookup: HashMap<String, i32>,
+	id_lookup: HashMap<String, usize>,
 	edge_table: HashMap<String, i32>
 }
 
@@ -33,7 +33,7 @@ impl UserDataGraph{
 		else{
 			let new_node = Node::new(new_node_id.clone());
 
-			let new_node_index = self.id_lookup.len() as i32;
+			let new_node_index = self.id_lookup.len();
 
 			self.id_lookup.insert(new_node.get_id(), new_node_index);
 			self.graph_vec.push(new_node);
@@ -42,8 +42,8 @@ impl UserDataGraph{
 	}
 
 	pub fn create_edge(&mut self,  node_1_id: &String, node_2_id: &String, start_weight: i32) -> bool {
-		let i_1: Option<&i32> = self.id_lookup.get(node_1_id);
-		let i_2: Option<&i32> = self.id_lookup.get(node_2_id);
+		let i_1: Option<&usize> = self.id_lookup.get(node_1_id);
+		let i_2: Option<&usize> = self.id_lookup.get(node_2_id);
 
 		if i_1 != None && i_2 != None {	//both of the nodes exist
 			let i1 = *(i_1.unwrap());
@@ -64,7 +64,7 @@ impl UserDataGraph{
 			self.edge_table.insert(key, start_weight);
 
 			//once we know we are inserting a new edge, we can add it to each Node in the vec
-			if let Some(node1) = self.graph_vec.get_mut(i1 as usize){
+			if let Some(node1) = self.graph_vec.get_mut(i1){
 				node1.add_edge(i2, node_2_id.clone());
 			}
 			else{
@@ -72,7 +72,7 @@ impl UserDataGraph{
 				return false;
 			}
 
-			if let Some(node2) = self.graph_vec.get_mut(i2 as usize){
+			if let Some(node2) = self.graph_vec.get_mut(i2){
 				node2.add_edge(i1, node_1_id.clone());
 			}
 			else{
@@ -92,11 +92,11 @@ impl UserDataGraph{
 
 		if let Some(weight) = self.edge_table.get_mut(&key) {
     		*weight += inc;
-    		true
+    		return true;
 		}
 		else{
 			println!("Attempted to add weight to non-existant edge");
-			false
+			return false;
 		}
 	}
 
@@ -193,17 +193,25 @@ impl UserDataGraph{
 	}
 */
 
-
-
-	fn attempt_cluster(&self, start_node: &mut Node, thread_num: usize, num_nodes: i32) -> (i32, Vec<String>) {
+	pub fn attempt_cluster(&self, start_node: &String, num_nodes: i32) -> (i32, Vec<String>) {
 		//initialize the cluster score and set for cluster nodes
 		let mut cluster_score: i32 = 0;
 		let mut cluster_nodes: Vec<String> = Vec::new();
 		let mut num_visited: i32 = 0;
 
-		//add the start node to the node set and mark it as visited
-		cluster_nodes.push(start_node.get_id());
-		let mut cur_node: &Node = start_node;
+		let mut s: usize = 0;
+		let start_index = self.id_lookup.get(start_node);
+		
+		if start_index == None {
+			println!("Attempted to start a cluster from a node that does not exist");
+			return (cluster_score, cluster_nodes);
+		}
+		else {
+			s = *(start_index.unwrap());
+		}
+
+		let mut cur_node: &Node = &self.graph_vec[s];
+		cluster_nodes.push(cur_node.get_id());
 		let mut next_node: &Node = &self.graph_vec[get_rn_in_range(cur_node.edges.len())];
 
 		while num_visited < num_nodes {
@@ -211,10 +219,13 @@ impl UserDataGraph{
 			cluster_nodes.push(next_node.get_id());
 			
 			let id: String = self.edge_table_hash(&cur_node.get_id(), &next_node.get_id());
-			cluster_score += self.edge_table.get(&id).unwrap();
+			let weight = self.edge_table.get(&id);
+			if weight != None {
+				cluster_score += *(weight.unwrap());
+			}
 			
 			cur_node = next_node;
-			next_node = &self.graph_vec[get_rn_in_range(cur_node.edges.len())];
+			next_node = &self.graph_vec[cur_node.edges[get_rn_in_range(cur_node.edges.len())].0];
 			num_visited += 1;
 		}
 
@@ -224,12 +235,12 @@ impl UserDataGraph{
 
 struct Node{
 	id: String,
-	edges: Vec<(i32, String)>
+	edges: Vec<(usize, String)>
 }
 
 impl Node{
 	pub fn new(id: String) -> Node {
-		let edges: Vec<(i32, String)> = Vec::new();
+		let edges: Vec<(usize, String)> = Vec::new();
 		Node{id: id, edges: edges}
 	}
 
@@ -241,7 +252,7 @@ impl Node{
 	//this relies on some checks done in graph::add_edge on the edge hashmap since
 	//it is much more efficient to check if an edge is an entry in the hash map
 	//then to search the vector for it
-	pub fn add_edge(&mut self, new_index: i32, new_id: String){
+	pub fn add_edge(&mut self, new_index: usize, new_id: String){
 		self.edges.push((new_index, new_id));
 	}
 }
