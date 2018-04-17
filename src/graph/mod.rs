@@ -193,12 +193,15 @@ impl UserDataGraph{
 	}
 */
 
+
+//need to optimize cluster score in a non-random way and prevent double counting of nodes
 	pub fn attempt_cluster(&self, start_node: &String, num_nodes: i32) -> (i32, Vec<String>) {
 		//initialize the cluster score and set for cluster nodes
 		let mut cluster_score: i32 = 0;
 		let mut cluster_nodes: Vec<String> = Vec::new();
 		let mut num_visited: i32 = 0;
 
+		//check that the provided start node actually exists in the graph
 		let mut s: usize = 0;
 		let start_index = self.id_lookup.get(start_node);
 		
@@ -210,22 +213,27 @@ impl UserDataGraph{
 			s = *(start_index.unwrap());
 		}
 
+		//initialize the node we will use and add the start node to the vector
 		let mut cur_node: &Node = &self.graph_vec[s];
-		cluster_nodes.push(cur_node.get_id());
-		let mut next_node: &Node = &self.graph_vec[get_rn_in_range(cur_node.edges.len())];
+		let mut last_node_id: String = cur_node.get_id();
+		cluster_nodes.push(last_node_id.clone());
+		let mut id: String = String::from("");
+		
+		cur_node = &self.graph_vec[get_rn_in_range(cur_node.edges.len())];
 
 		while num_visited < num_nodes {
+			//make sure we don't add any nodes to our cluster twice
 
-			cluster_nodes.push(next_node.get_id());
-			
-			let id: String = self.edge_table_hash(&cur_node.get_id(), &next_node.get_id());
+
+			cluster_nodes.push(cur_node.get_id());
+			id = self.edge_table_hash(&last_node_id, &cur_node.get_id());
 			let weight = self.edge_table.get(&id);
 			if weight != None {
 				cluster_score += *(weight.unwrap());
 			}
 			
-			cur_node = next_node;
-			next_node = &self.graph_vec[cur_node.edges[get_rn_in_range(cur_node.edges.len())].0];
+			last_node_id = cur_node.get_id();
+			cur_node = &self.graph_vec[cur_node.edges[get_rn_in_range(cur_node.edges.len())].0];
 			num_visited += 1;
 		}
 
