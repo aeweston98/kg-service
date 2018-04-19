@@ -1,11 +1,18 @@
 extern crate rand;
+extern crate serde_json;
+extern crate chrono;
+extern crate bson;
+extern crate mongo_driver;
 
 mod graph;
+mod data_handler;
 //mod spotify;
+//mod test;
 
 use std::time::{SystemTime};
 use rand::{Rng, thread_rng};
 use graph::UserDataGraph;
+use data_handler::MongoAdapter;
 
 
 fn test_graph(n: i32) -> UserDataGraph {
@@ -17,7 +24,6 @@ fn test_graph(n: i32) -> UserDataGraph {
 
 	let mut rng = thread_rng();
 	
-
   	for x in 1..n {
   		for y in x+1..n{
   			udg.create_edge(&x.to_string(), &y.to_string(), 1);
@@ -35,7 +41,7 @@ fn test_graph(n: i32) -> UserDataGraph {
 }
 
 fn main() {
-
+	/*
 	let mut udg = test_graph(1000);
 	let mut size: i32 = 25;
 
@@ -47,4 +53,7 @@ fn main() {
 
 	println!("Cluster score is {} out of {}", cluster_score, size);
 	println!("{:?}", cluster_vec);
+	*/
+
+	let temp = MongoAdapter::new();
 }
