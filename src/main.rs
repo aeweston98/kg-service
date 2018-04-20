@@ -3,6 +3,8 @@ extern crate serde_json;
 extern crate chrono;
 extern crate bson;
 extern crate mongo_driver;
+extern crate hyper;
+extern crate hyper_native_tls;
 
 mod graph;
 mod data_handler;
