@@ -8,7 +8,7 @@ extern crate hyper_native_tls;
 
 mod graph;
 mod data_handler;
-//mod spotify;
+mod spotify;
 //mod test;
 
 use std::time::{SystemTime};
