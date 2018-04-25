@@ -1,7 +1,7 @@
 extern crate rand;
 extern crate serde_json;
 extern crate chrono;
-extern crate bson;
+#[macro_use] extern crate bson;
 extern crate mongo_driver;
 extern crate hyper;
 extern crate hyper_native_tls;
@@ -57,5 +57,6 @@ fn main() {
 	println!("{:?}", cluster_vec);
 	*/
 
-	let temp = MongoAdapter::new();
+	let mongo = MongoAdapter::new();
+	mongo.test_client();
 }
