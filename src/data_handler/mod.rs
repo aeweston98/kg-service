@@ -7,19 +7,19 @@ use bson::Bson;
 use mongo_driver::client::{Client, ClientPool, Uri};
 
 pub struct MongoAdapter{
+	pool: Arc<ClientPool>,
 }
 
 
 impl MongoAdapter{
-	pub fn new() {
+	pub fn new() -> MongoAdapter{
 		
 	    let uri = Uri::new("mongodb://localhost:27017/").unwrap();
 		let pool = Arc::new(ClientPool::new(uri.clone(), None));
-		let client = pool.pop();
-		client.get_server_status(None).unwrap();
+		//let client = pool.pop();
+		//client.get_server_status(None).unwrap();
 
-		//DataHandler{client: client}
+		MongoAdapter{pool: pool}
 	}
-
 }
 
