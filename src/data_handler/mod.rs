@@ -20,14 +20,37 @@ impl MongoAdapter{
 		MongoAdapter{pool: pool}
 	}
 
-	pub fn test_client(&self) -> i32 {
+	pub fn create_document(&self, database: &str, collection: &str){
 		let client = self.pool.pop();
 		client.get_server_status(None).unwrap();
 
-		let mut collection = client.get_collection("ezyplayer", "user_graph");
+		let mut collection = client.get_collection(database, collection);
 
 		collection.insert(&doc!{"key" => 1}, None).is_ok();
-		return 1;
+	}
+
+	pub fn update_document(&self, database: &str, collection: &str) {
+		let client = self.pool.pop();
+		client.get_server_status(None).unwrap();
+
+		let mut collection = client.get_collection(database, collection);
+
+	}
+
+	pub fn remove_document(&self, database: &str, collection: &str) {
+		let client = self.pool.pop();
+		client.get_server_status(None).unwrap();
+
+		let mut collection = client.get_collection(database, collection);
+
+	}
+
+	pub fn read_document(&self, database: &str, collection: &str) {
+		let client = self.pool.pop();
+		client.get_server_status(None).unwrap();
+
+		let mut collection = client.get_collection(database, collection);
+
 	}
 }
 

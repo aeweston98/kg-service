@@ -58,5 +58,5 @@ fn main() {
 	*/
 
 	let mongo = MongoAdapter::new();
-	mongo.test_client();
+	mongo.test_client("ezyplayer", "user_graph");
 }
